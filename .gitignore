@@ -23,7 +23,7 @@
 /client/yarn-error.log*
 
 # environment
-/src/db/meowbert_db.sqlite3
+/src/db/ongaku_db.sqlite3
 /.vscode
 /img
 .env
