@@ -1,4 +1,5 @@
 import { BaseCommandInteraction, Client, Guild, GuildMember, MessageEmbed } from "discord.js";
+import { joinVoiceChannel } from "@discordjs/voice";
 import { Command } from "../../types/Command";
 
 export const Join: Command = {
@@ -21,6 +22,18 @@ export const Join: Command = {
       embed.setColor('#d5eee1')
       .setTitle('connected!')
       .setDescription(`${member.user.tag} is connected to ${member.voice.channel.name}!`)
+
+      const connection = joinVoiceChannel({
+        guildId: interaction.guildId as string,
+        channelId: member.voice.channelId as string,
+        adapterCreator: member.voice.channel.guild.voiceAdapterCreator
+      })
+
+      //wait a bit
+
+      // leave the channel
+      connection.destroy()
+
     } else {
       // The member is not connected to a voice channel.
       embed.setColor('#d5eee1')
