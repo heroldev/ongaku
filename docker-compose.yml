@@ -1,0 +1,12 @@
+version: '2.2'
+
+services:
+  ongaku:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    volumes:
+      - ./src:/home/node/app/src
+    container_name: ongaku-bot
+    command: npm run start
