@@ -9,6 +9,5 @@ import ytdl from "ytdl-core";
   title: string;
   url: string;
   duration: number;
-  formattedDuration: string;
   member: GuildMember;
 }

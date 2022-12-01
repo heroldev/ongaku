@@ -5,6 +5,7 @@ import { Command } from "../../types/Command";
 import ytdl = require("ytdl-core");
 import ytsr = require("ytsr");
 import { Song } from "../../types/Song";
+import { Player } from "../../util/Player";
 
 export const Play: Command = {
   name: "play",
@@ -29,57 +30,67 @@ export const Play: Command = {
       embed.setColor('#d5eee1')
         .setTitle('not connected!')
         .setDescription(`You are not connected to a voice channel. Please connect to a channel to play music.`)
-    } else {
-      const channel = member.voice.channel
-      const permissions = channel!.permissionsFor(client.user as ClientUser);
 
-      if (!permissions!.has("CONNECT") || !permissions!.has("SPEAK")) {
-        embed.setColor('#d5eee1')
-          .setTitle('permissions issue!')
-          .setDescription(`I'm lacking the necessary permissions to join or speak in the channel. Please make sure your permissions are set accordingly`)
-      } else {
-
-        // Get the song info
-        let songInfo = null;
-        try {
-          songInfo = await getSongInfo(interaction.options.get("query", true).value!.toString());
-        } catch (error) {
-          console.log(error)
-        }
-        if (songInfo === null) {
-          embed.setColor('#d5eee1')
-            .setTitle('could not find the song!')
-            .setDescription(`please provide a different link or query!`)
-        } else {
-          embed.setColor('#d5eee1')
-            .setTitle('song found!')
-            .setDescription(`${member.user.tag} is connected to ${member.voice.channel!.name}!`)
-
-          console.log(songInfo)
-
-          let ap = await getSongPlayer(songInfo!.videoDetails.video_url)
-
-          const connection = joinVoiceChannel({
-            guildId: interaction.guildId as string,
-            channelId: member.voice.channelId as string,
-            adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
-          })
-
-          connection.subscribe(ap)
-
-          embed.setColor('#d5eee1')
-            .setTitle(`Now Playing: ${songInfo.videoDetails.title}`)
-            .setDescription(`Length: ${songInfo.videoDetails.lengthSeconds} seconds.`)
-
-          ap.on(AudioPlayerStatus.Idle, () => {
-            connection.destroy()
-          });
-        }
-
-
-
-      }
+      await interaction.followUp({
+        ephemeral: true,
+        embeds: [embed]
+      });
+      return
     }
+
+    const channel = member.voice.channel
+    const permissions = channel!.permissionsFor(client.user as ClientUser);
+
+    if (!permissions!.has("CONNECT") || !permissions!.has("SPEAK")) {
+      embed.setColor('#d5eee1')
+        .setTitle('permissions issue!')
+        .setDescription(`I'm lacking the necessary permissions to join or speak in the channel. Please make sure your permissions are set accordingly`)
+
+      await interaction.followUp({
+        ephemeral: true,
+        embeds: [embed]
+      });
+      return
+    }
+
+    // Get the song info
+    let player = new Player(interaction.options.get("query", true).value!.toString(), member)
+
+    let songFound = await player.getSongInfo();
+
+    if (!songFound) {
+      embed.setColor('#d5eee1')
+        .setTitle('could not find the song!')
+        .setDescription(`please provide a different link or query!`)
+
+      await interaction.followUp({
+        ephemeral: true,
+        embeds: [embed]
+      });
+      return
+    }
+
+    embed.setColor('#d5eee1')
+      .setTitle('song found!')
+      .setDescription(`${member.user.tag} is connected to ${member.voice.channel!.name}!`)
+
+    let ap = await player.getSongPlayer()
+
+    const connection = joinVoiceChannel({
+      guildId: interaction.guildId as string,
+      channelId: member.voice.channelId as string,
+      adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
+    })
+
+    connection.subscribe(ap)
+
+    embed.setColor('#d5eee1')
+      .setTitle(`Now Playing: ${player.currentSong.title}`)
+      .setDescription(`Length: ${player.currentSong.duration} seconds.`)
+
+    ap.on(AudioPlayerStatus.Idle, () => {
+      connection.destroy()
+    });
 
     await interaction.followUp({
       ephemeral: true,
@@ -103,66 +114,4 @@ const userNotInChannel = (member: GuildMember): boolean => {
 
 }
 
-/**
-   * Read the user's arguments and get the song from youtube
-   *
-   * @param args the arguments of the user
-   * @returns the song info of their desired song
-   */
-const getSongInfo = async (args: string): Promise<ytdl.videoInfo> => {
-  let songInfo = null;
-  let songUrl = args
 
-  // Search for the song if the url is invalid
-  // This part tends to break often, hence lots of try catch
-  if (!ytdl.validateURL(songUrl)) {
-    // Combine args
-    let searchString = null;
-    try {
-      searchString = await ytsr.getFilters(args);
-    } catch (error) {
-      console.log(error);
-      throw Error("Error parsing arguments");
-    }
-
-    // Try to find video
-    const videoSearch = searchString.get("Type")!.get("Video");
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const results: any = await ytsr(videoSearch!.url || "", { limit: 1 });
-      console.log(results);
-      songUrl = results.items[0].url;
-    } catch (error) {
-      console.log(error);
-      throw Error("Error searching for the song");
-    }
-
-    // Check that song URL is valid
-    if (!ytdl.validateURL(songUrl)) {
-      throw Error("Could not find the song");
-    }
-  }
-
-  try {
-    // Find the song details from URL
-    songInfo = await ytdl.getInfo(songUrl);
-  } catch (error) {
-    console.log(error);
-    throw Error("Error getting the video from the URL");
-  }
-  return songInfo;
-}
-
-
-const getSongPlayer = async (url: string): Promise<AudioPlayer> => {
-  const player = createAudioPlayer();
-  const stream = ytdl(url, {
-    filter: "audioonly",
-    highWaterMark: 1 << 25, // Set buffer size
-  });
-  const resource = createAudioResource(stream, {
-    inputType: StreamType.Arbitrary,
-  });
-  player.play(resource);
-  return entersState(player, AudioPlayerStatus.Playing, 5_000);
-}
