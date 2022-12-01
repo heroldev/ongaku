@@ -29,6 +29,7 @@
     "dotenv": "^16.0.1",
     "opusscript": "^0.0.8",
     "sqlite3": "^5.0.8",
+    "tweetnacl": "^1.0.3",
     "ytdl-core": "^4.11.2",
     "ytsr": "^3.8.0"
   }

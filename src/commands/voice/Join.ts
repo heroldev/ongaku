@@ -13,15 +13,13 @@ export const Join: Command = {
 
     const embed = new MessageEmbed()
 
-    console.log(member.voice)
-
     if (member.voice.channel) { // Checking if the member is connected to a VoiceChannel.
       // The member is connected to a voice channel.
       // https://discord.js.org/#/docs/main/stable/class/VoiceState
-      
+
       embed.setColor('#d5eee1')
-      .setTitle('connected!')
-      .setDescription(`${member.user.tag} is connected to ${member.voice.channel.name}!`)
+        .setTitle('connected!')
+        .setDescription(`${member.user.tag} is connected to ${member.voice.channel.name}!`)
 
       const connection = joinVoiceChannel({
         guildId: interaction.guildId as string,
@@ -29,21 +27,27 @@ export const Join: Command = {
         adapterCreator: member.voice.channel.guild.voiceAdapterCreator
       })
 
-      //wait a bit
+      await interaction.followUp({
+        ephemeral: true,
+        embeds: [embed]
+      });
 
-      // leave the channel
-      connection.destroy()
+      //wait a bit
+      await new Promise(resolve => setTimeout(resolve, 5000)).then(() => {
+        // leave the channel
+        connection.destroy()
+      })
 
     } else {
       // The member is not connected to a voice channel.
       embed.setColor('#d5eee1')
-      .setTitle('not connected!')
-      .setDescription(`${member.user.tag} is not connected to a voice channel.`)
-    };
+        .setTitle('not connected!')
+        .setDescription(`${member.user.tag} is not connected to a voice channel.`)
 
-    await interaction.followUp({
-      ephemeral: true,
-      embeds: [embed]
-    });
+      await interaction.followUp({
+        ephemeral: true,
+        embeds: [embed]
+      });
+    };
   }
 };
