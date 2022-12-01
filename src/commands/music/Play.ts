@@ -28,7 +28,7 @@ export const Play: Command = {
     if (userNotInChannel(member)) {
       embed.setColor('#d5eee1')
         .setTitle('not connected!')
-        .setDescription(`${member.user.tag} is not connected to a voice channel. Please connect to a channel to play music.`)
+        .setDescription(`You are not connected to a voice channel. Please connect to a channel to play music.`)
     } else {
       const channel = member.voice.channel
       const permissions = channel!.permissionsFor(client.user as ClientUser);
@@ -49,31 +49,34 @@ export const Play: Command = {
         if (songInfo === null) {
           embed.setColor('#d5eee1')
             .setTitle('could not find the song!')
+            .setDescription(`please provide a different link or query!`)
+        } else {
+          embed.setColor('#d5eee1')
+            .setTitle('song found!')
+            .setDescription(`${member.user.tag} is connected to ${member.voice.channel!.name}!`)
+
+          console.log(songInfo)
+
+          let ap = await getSongPlayer(songInfo!.videoDetails.video_url)
+
+          const connection = joinVoiceChannel({
+            guildId: interaction.guildId as string,
+            channelId: member.voice.channelId as string,
+            adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
+          })
+
+          connection.subscribe(ap)
+
+          embed.setColor('#d5eee1')
+            .setTitle(`Now Playing: ${songInfo.videoDetails.title}`)
+            .setDescription(`Length: ${songInfo.videoDetails.lengthSeconds} seconds.`)
+
+          ap.on(AudioPlayerStatus.Idle, () => {
+            connection.destroy()
+          });
         }
 
-        embed.setColor('#d5eee1')
-          .setTitle('song found!')
-          .setDescription(`${member.user.tag} is connected to ${member.voice.channel!.name}!`)
 
-        console.log(songInfo)
-
-        let ap = await getSongPlayer(songInfo!.videoDetails.video_url)
-
-        const connection = joinVoiceChannel({
-          guildId: interaction.guildId as string,
-          channelId: member.voice.channelId as string,
-          adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
-        })
-
-        connection.subscribe(ap)
-
-        embed.setColor('#d5eee1')
-          .setTitle('connected!')
-          .setDescription(`${member.user.tag} is connected to ${member.voice.channel!.name}!`)
-
-        ap.on(AudioPlayerStatus.Idle, () => {
-          connection.destroy()
-        });
 
       }
     }
