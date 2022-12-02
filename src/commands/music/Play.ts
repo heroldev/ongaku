@@ -85,8 +85,16 @@ export const Play: Command = {
     connection.subscribe(ap)
 
     embed.setColor('#d5eee1')
-      .setTitle(`Now Playing: ${player.currentSong.title}`)
-      .setDescription(`Length: ${player.currentSong.duration} seconds.`)
+      .setTitle(`Now Playing!`)
+      .setDescription(`musebert is connected to ${member.voice.channel}`)
+      .setImage(player.currentSong.info.videoDetails.thumbnails[0].url)
+      .addFields(
+        { name: 'video title', value: `${player.currentSong.title}`},
+        { name: 'requested by', value: `${player.currentSong.member.user.tag}`, inline: true },
+        { name: 'length', value: `${player.currentSong.duration} seconds`, inline: true },
+        { name: 'video link', value: `[youtube](${player.currentSong.url})`, inline: true}
+        )
+      .setFooter({ text: `use \`/queue\` to view upcoming videos`})
 
     ap.on(AudioPlayerStatus.Idle, () => {
       connection.destroy()
