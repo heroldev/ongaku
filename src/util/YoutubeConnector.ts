@@ -1,29 +1,21 @@
-import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, StreamType } from "@discordjs/voice";
+import { AudioResource, createAudioResource, entersState, StreamType } from "@discordjs/voice";
 import { GuildMember } from "discord.js";
 import ytdl from "ytdl-core";
 import ytsr from "ytsr";
 import { Song } from "../types/Song";
 
-export class Player {
-  url: string
-  currentSong!: Song;
-  member: GuildMember
-
-  constructor(url: string, member: GuildMember) {
-    this.url = url
-    this.member = member
-  }
+export class YoutubeConnector {
 
   /**
-   * Read the user's arguments and get the song from youtube
-   *
-   * @param args the arguments of the user
-   * @returns the song info of their desired song
-   */
-  getSongInfo = async (): Promise<boolean> => {
+ * Read the user's arguments and get the song information from youtube
+ * @param url 
+ * @param member 
+ * @returns 
+ */
+  getSongInfo = async (url: string, member: GuildMember): Promise<Song> => {
     let songInfo = null;
     let songFound = false;
-    let songUrl = this.url
+    let songUrl = url
 
     // Search for the song if the url is invalid
     // This part tends to break often, hence lots of try catch
@@ -63,29 +55,26 @@ export class Player {
       throw Error("Error getting the video from the URL");
     }
 
-    songFound = true
-    this.currentSong = {
+    return {
       info: songInfo,
       url: songInfo.videoDetails.video_url,
       title: songInfo.videoDetails.title,
       duration: parseInt(songInfo.videoDetails.lengthSeconds),
-      member: this.member
+      member: member
     }
-    return songFound
   }
 
 
-  getSongPlayer = async (): Promise<AudioPlayer> => {
-    const player = createAudioPlayer();
-    const stream = ytdl(this.url, {
+  getStream = async (url: string): Promise<AudioResource> => {
+    const stream = ytdl(url, {
       filter: "audioonly",
       highWaterMark: 1 << 25, // Set buffer size
     });
     const resource = createAudioResource(stream, {
       inputType: StreamType.Arbitrary,
     });
-    player.play(resource);
-    return entersState(player, AudioPlayerStatus.Playing, 5_000);
+    return resource
+
   }
 
 }

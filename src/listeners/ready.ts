@@ -1,8 +1,9 @@
-import { Client, Guild } from "discord.js";
+import { Client, ExcludeEnum, Guild } from "discord.js";
 import { getListeningStatus } from "../util/listeningStatus";
 import { Commands } from "../Commands";
 import dbConnect from "../db/dbConnect";
 import dbCreate from "../db/dbCreate";
+import { ActivityTypes } from "discord.js/typings/enums";
 
 /**
  * The main bot entry point. Go for launch!
@@ -15,7 +16,10 @@ export default (client: Client): void => {
 
     client.user.setPresence({
       status: 'online',
-      activities: [getListeningStatus()]
+      activities: [{
+        name: "/play",
+        type: ActivityTypes.LISTENING as ExcludeEnum<typeof ActivityTypes, "CUSTOM">
+      }],
     })
 
     // replace with BETA_GUILD_TOKEN for multi-person test server

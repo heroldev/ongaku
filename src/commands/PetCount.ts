@@ -11,7 +11,7 @@ export const PetCount: Command = {
   type: "CHAT_INPUT",
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     const embed = new MessageEmbed()
-      .setColor('#d5eee1')
+      .setColor('#efc8c2')
       .setTitle(interaction.user.username + "\'s pet count")
 
     const userPetCount = await dbGetPet(interaction.user.id).then((value: any) => {

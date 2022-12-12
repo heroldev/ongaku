@@ -3,21 +3,20 @@ import { Command } from "../types/Command";
 
 export const Help: Command = {
   name: "help",
-  description: "Info and commands for ongaku",
+  description: "Info and commands for musebert",
   type: "CHAT_INPUT",
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     const embed = new MessageEmbed()
-      .setColor('#d5eee1')
-      .setTitle('ongaku help & info')
-      .setAuthor({ name: 'developed by heroldev', url: 'https://github.com/heroldev', iconURL: 'https://i.imgur.com/QuUEvbD.png' })
-      .setDescription('Thank you for using ongaku!')
+      .setColor('#efc8c2')
+      .setTitle('musebert help & info')
+      .setAuthor({ name: 'developed by heroldev', url: 'https://github.com/heroldev', iconURL: 'https://i.imgur.com/FB5GOR0.png' })
+      .setDescription('Thank you for using musebert!')
       .addFields(
-        { name: 'Functionality', value: '- sends a Question of the Day at 7am Central Time to each registered server channel'},
-        { name: 'General Commands', value: '`/hello` - omg hey :3\n`/help` - returns this message\n`/status` - returns meowbert status\n`/pet` - give me the pets :3\n`/petcount` - shows how many times you have petted me!' },
-        { name: 'Question of the Day Commands (Admin Only)', value: '`/addqotd` - adds a new Question of the Day\n`/startqotd` - enables the Question of the Day and sets the channel where it will be sent\n`/stopqotd` - disables the Question of the Day' },
-        { name: 'Developer Commands', value: '`/newqotd` - forcibly sends a new QOTD, regardless of time\n`/redoqotd` - sends the last-used QOTD\n`/broadcast` - sends a custom message to all QOTD channels'},
+        { name: 'Functionality', value: '- a simple youtube music bot to make your day slightly better' },
+        { name: 'General Commands', value: '`/hello` - omg hey :3\n`/help` - returns this message\n`/status` - returns musebert status\n`/pet` - give me the pets :3\n`/petcount` - shows how many times you have petted me!' },
+        { name: 'Playback Commands', value: '`/play <query>` - plays or queues a video from a youtube video URL\n`/queue` - displays the current video queue, or adds a video to the queue\n`/pause` - pauses the player\n`/unpause` - unpauses the player\n`/skip` - skips the currently playing video\n`/clear` - clears the queue, but does not stop the player\n`/stop` - stops the player and clears the queue' },
         )
-      .setFooter({ text: 'ongaku v1.0.0', iconURL: 'https://i.imgur.com/QuUEvbD.png' });
+      .setFooter({ text: 'musebert v1.0.0', iconURL: 'https://i.imgur.com/FB5GOR0.png' });
 
     await interaction.followUp({
       ephemeral: true,

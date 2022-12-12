@@ -14,6 +14,6 @@ export const client = new Client({
 ready(client);
 interactionCreate(client);
 
-updateListeningStatus.start()
+//updateListeningStatus.start()
 
 client.login(process.env.DISCORD_API_TOKEN);

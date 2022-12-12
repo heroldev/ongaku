@@ -5,7 +5,9 @@ import { Command } from "../../types/Command";
 import ytdl = require("ytdl-core");
 import ytsr = require("ytsr");
 import { Song } from "../../types/Song";
-import { Player } from "../../util/Player";
+import { ServerQueue } from "../../util/ServerQueue";
+import { EnqueueSong } from "./SongQueue";
+import { YoutubeConnector } from "../../util/YoutubeConnector";
 
 export const Play: Command = {
   name: "play",
@@ -15,7 +17,7 @@ export const Play: Command = {
     {
       name: 'query',
       type: 'STRING',
-      description: 'a youtube video/playlist URL or query to search',
+      description: 'a youtube video URL or query to search',
       required: true
     },
   ],
@@ -27,7 +29,7 @@ export const Play: Command = {
     const member: GuildMember = guild.members.cache.get(interaction.user.id as string) as GuildMember; // Getting the member.
 
     if (userNotInChannel(member)) {
-      embed.setColor('#d5eee1')
+      embed.setColor('#efc8c2')
         .setTitle('not connected!')
         .setDescription(`You are not connected to a voice channel. Please connect to a channel to play music.`)
 
@@ -42,7 +44,7 @@ export const Play: Command = {
     const permissions = channel!.permissionsFor(client.user as ClientUser);
 
     if (!permissions!.has("CONNECT") || !permissions!.has("SPEAK")) {
-      embed.setColor('#d5eee1')
+      embed.setColor('#efc8c2')
         .setTitle('permissions issue!')
         .setDescription(`I'm lacking the necessary permissions to join or speak in the channel. Please make sure your permissions are set accordingly`)
 
@@ -53,13 +55,12 @@ export const Play: Command = {
       return
     }
 
-    // Get the song info
-    let player = new Player(interaction.options.get("query", true).value!.toString(), member)
+    let ytc = new YoutubeConnector()
 
-    let songFound = await player.getSongInfo();
+    let songInfo = await ytc.getSongInfo(interaction.options.get("query", true).value!.toString(), member)
 
-    if (!songFound) {
-      embed.setColor('#d5eee1')
+    if (!songInfo) {
+      embed.setColor('#efc8c2')
         .setTitle('could not find the song!')
         .setDescription(`please provide a different link or query!`)
 
@@ -70,35 +71,44 @@ export const Play: Command = {
       return
     }
 
-    embed.setColor('#d5eee1')
-      .setTitle('song found!')
-      .setDescription(`${member.user.tag} is connected to ${member.voice.channel!.name}!`)
+    // if it finds the song, then add it to the queue and exit, or play it
+    if (ServerQueue.get(interaction.guildId as string)) {
+      if (!ServerQueue.get(interaction.guildId as string)?.isEmpty()) {
+        EnqueueSong(guild, songInfo)
+        embed.setColor('#efc8c2')
+          .setTitle(`Song queued!`)
+          .setDescription(`musebert is connected to ${member.voice.channel}`)
+          .setImage(songInfo.info.videoDetails.thumbnails[0].url)
+          .addFields(
+            { name: 'video title', value: `${songInfo.title}` },
+            { name: 'requested by', value: `${songInfo.member.user.tag}`, inline: true },
+            { name: 'length', value: `${songInfo.duration} seconds`, inline: true },
+            { name: 'video link', value: `[youtube](${songInfo.url})`, inline: true }
+          )
+          .setFooter({ text: `use \`/queue\` to view upcoming videos` })
+        await interaction.followUp({
+          ephemeral: true,
+          embeds: [embed]
+        });
+        return
+      }
+    }
 
-    let ap = await player.getSongPlayer()
+    // add it to the queue and make a new song player
+    EnqueueSong(guild, songInfo)
+    songplayer(interaction, member)
 
-    const connection = joinVoiceChannel({
-      guildId: interaction.guildId as string,
-      channelId: member.voice.channelId as string,
-      adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
-    })
-
-    connection.subscribe(ap)
-
-    embed.setColor('#d5eee1')
+    embed.setColor('#efc8c2')
       .setTitle(`Now Playing!`)
       .setDescription(`musebert is connected to ${member.voice.channel}`)
-      .setImage(player.currentSong.info.videoDetails.thumbnails[0].url)
+      .setImage(songInfo.info.videoDetails.thumbnails[0].url)
       .addFields(
-        { name: 'video title', value: `${player.currentSong.title}`},
-        { name: 'requested by', value: `${player.currentSong.member.user.tag}`, inline: true },
-        { name: 'length', value: `${player.currentSong.duration} seconds`, inline: true },
-        { name: 'video link', value: `[youtube](${player.currentSong.url})`, inline: true}
-        )
-      .setFooter({ text: `use \`/queue\` to view upcoming videos`})
-
-    ap.on(AudioPlayerStatus.Idle, () => {
-      connection.destroy()
-    });
+        { name: 'video title', value: `${songInfo.title}` },
+        { name: 'requested by', value: `${songInfo.member.user.tag}`, inline: true },
+        { name: 'length', value: `${songInfo.duration} seconds`, inline: true },
+        { name: 'video link', value: `[youtube](${songInfo.url})`, inline: true }
+      )
+      .setFooter({ text: `use \`/queue\` to view upcoming videos` })
 
     await interaction.followUp({
       ephemeral: true,
@@ -112,7 +122,7 @@ export const Play: Command = {
  * @param client 
  * @param interaction 
  */
-const userNotInChannel = (member: GuildMember): boolean => {
+export const userNotInChannel = (member: GuildMember): boolean => {
 
   if (member.voice.channel) {
     // member is in a channel and the bot can see that
@@ -122,4 +132,42 @@ const userNotInChannel = (member: GuildMember): boolean => {
 
 }
 
+export const songplayer = async (interaction: BaseCommandInteraction, member: GuildMember) => {
+
+  if (!getVoiceConnection(interaction.guildId as string)) {
+    // join the voice channel if a connection doesn't already exist
+    joinVoiceChannel({
+      guildId: interaction.guildId as string,
+      channelId: member.voice.channelId as string,
+      adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
+    })
+  }
+
+  let ytc = new YoutubeConnector()
+
+  let stream = await ytc.getStream(interaction.options.get("query", true).value!.toString())
+
+  let ap = createAudioPlayer()
+  ap.play(stream)
+
+  const connection = getVoiceConnection(interaction.guildId as string)
+  connection?.subscribe(ap)
+
+  ap.on(AudioPlayerStatus.Idle, async () => {
+    ServerQueue.get(interaction.guildId as string)?.dequeue()
+
+    //check the queue
+    if (!ServerQueue.get(interaction.guildId as string)?.isEmpty()) {
+      let nextSong = ServerQueue.get(interaction.guildId as string)?.front()
+
+      let stream = await ytc.getStream(nextSong?.url as string)
+      ap.play(stream);
+      entersState(ap, AudioPlayerStatus.Playing, 5_000);
+    } else {
+      ServerQueue.delete(interaction.guildId as string)
+      connection?.destroy()
+    }
+  });
+
+}
 

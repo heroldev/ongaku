@@ -13,7 +13,7 @@ export const Pet: Command = {
     type: "CHAT_INPUT",
     run: async (client: Client, interaction: BaseCommandInteraction) => {
         const embed = new MessageEmbed()
-        .setColor('#d5eee1')
+        .setColor('#efc8c2')
         .setTitle('omg! :3')
         .setDescription('ur pettin\' me! *purrs contently*')
 
