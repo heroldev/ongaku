@@ -165,9 +165,17 @@ export const songplayer = async (interaction: BaseCommandInteraction, member: Gu
       entersState(ap, AudioPlayerStatus.Playing, 5_000);
     } else {
       ServerQueue.delete(interaction.guildId as string)
-      connection?.destroy()
+      connection!.destroy()
     }
   });
 
+}
+
+/// omg why is making a timeout so hard
+const create_timeout = (guildId: string): NodeJS.Timeout => {
+  return setTimeout(() => {
+    ServerQueue.delete(guildId)
+    getVoiceConnection(guildId)!.destroy()
+  }, 10000)
 }
 

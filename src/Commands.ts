@@ -13,4 +13,4 @@ import { Status } from "./commands/Status";
 import { Join } from "./commands/voice/Join";
 import { Command } from "./types/Command";
 
-export const Commands: Command[] = [Help, Play, Pause, Unpause, SongQueue, Pet, PetCount, Skip, Stop, Clear, Status];
+export const Commands: Command[] = [Help, Play, Pause, Unpause, SongQueue, Skip, Stop, Clear, Status];

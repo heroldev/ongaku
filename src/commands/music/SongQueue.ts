@@ -1,9 +1,10 @@
-import { BaseCommandInteraction, Client, EmbedFieldData, Guild, GuildMember, MessageEmbed } from "discord.js";
+import { BaseCommandInteraction, Client, EmbedFieldData, Guild, GuildMember, MessageEmbed, VoiceState } from "discord.js";
 import { Command } from "../../types/Command";
 import { ServerQueue } from "../../util/ServerQueue";
 import { Queue } from "@datastructures-js/queue";
 import { Song } from "../../types/Song";
 import { YoutubeConnector } from "../../util/YoutubeConnector";
+import { AudioPlayerStatus, getVoiceConnection, VoiceConnectionReadyState, VoiceConnectionState } from "@discordjs/voice";
 
 export const SongQueue: Command = {
   name: "queue",
@@ -55,11 +56,26 @@ export const SongQueue: Command = {
         return
       }
 
+      const conn = getVoiceConnection(guild.id)?.state as VoiceConnectionReadyState
+
+      if (conn.subscription?.player.state.status === AudioPlayerStatus.Idle) {
+        embed.setColor('#efc8c2')
+          .setTitle('no videos in the queue!')
+          .setDescription('use \`/play\` to get the party started!')
+        await interaction.followUp({
+          ephemeral: true,
+          embeds: [embed]
+        });
+        return
+      }
+
       EnqueueSong(guild, songInfo)
+
+      const clientChannel = guild.members.cache.get(client.user?.id as string)?.voice.channel
 
       embed.setColor('#efc8c2')
         .setTitle('Song queued!')
-        .setDescription(`musebert is connected to ${member.voice.channel}`)
+        .setDescription(`musebert is connected to ${clientChannel}`)
         .setImage(songInfo.info.videoDetails.thumbnails[0].url)
         .addFields(
           { name: 'video title', value: `${songInfo.title}` },
@@ -92,9 +108,11 @@ export const SongQueue: Command = {
           })
         }
 
+        const clientChannel = guild.members.cache.get(client.user?.id as string)?.voice.channel
+
         embed.setColor('#efc8c2')
           .setTitle('Current Queue:')
-          .setDescription(`musebert is connected to ${member.voice.channel}`)
+          .setDescription(`musebert is connected to ${clientChannel}`)
           .addFields(queueList)
 
       } else {
