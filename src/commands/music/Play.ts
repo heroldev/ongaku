@@ -71,13 +71,15 @@ export const Play: Command = {
       return
     }
 
+    const clientChannel = guild.members.cache.get(client.user?.id as string)?.voice.channel
+
     // if it finds the song, then add it to the queue and exit, or play it
     if (ServerQueue.get(interaction.guildId as string)) {
       if (!ServerQueue.get(interaction.guildId as string)?.isEmpty()) {
         EnqueueSong(guild, songInfo)
         embed.setColor('#efc8c2')
           .setTitle(`Song queued!`)
-          .setDescription(`musebert is connected to ${member.voice.channel}`)
+          .setDescription(`musebert is connected to ${clientChannel}`)
           .setImage(songInfo.info.videoDetails.thumbnails[0].url)
           .addFields(
             { name: 'video title', value: `${songInfo.title}` },
@@ -96,11 +98,11 @@ export const Play: Command = {
 
     // add it to the queue and make a new song player
     EnqueueSong(guild, songInfo)
-    songplayer(interaction, member)
+    songplayer(interaction, member, guild)
 
     embed.setColor('#efc8c2')
       .setTitle(`Now Playing!`)
-      .setDescription(`musebert is connected to ${member.voice.channel}`)
+      .setDescription(`musebert is connected to ${clientChannel}`)
       .setImage(songInfo.info.videoDetails.thumbnails[0].url)
       .addFields(
         { name: 'video title', value: `${songInfo.title}` },
@@ -132,7 +134,7 @@ export const userNotInChannel = (member: GuildMember): boolean => {
 
 }
 
-export const songplayer = async (interaction: BaseCommandInteraction, member: GuildMember) => {
+export const songplayer = async (interaction: BaseCommandInteraction, member: GuildMember, guild: Guild) => {
 
   if (!getVoiceConnection(interaction.guildId as string)) {
     // join the voice channel if a connection doesn't already exist
@@ -164,18 +166,16 @@ export const songplayer = async (interaction: BaseCommandInteraction, member: Gu
       ap.play(stream);
       entersState(ap, AudioPlayerStatus.Playing, 5_000);
     } else {
+      /*
       ServerQueue.delete(interaction.guildId as string)
       connection!.destroy()
+      */
+      if (guild.me?.voice.channel?.members.size! <= 1) {
+        ServerQueue.delete(interaction.guildId as string)
+        connection!.destroy()
+      }
     }
   });
 
-}
-
-/// omg why is making a timeout so hard
-const create_timeout = (guildId: string): NodeJS.Timeout => {
-  return setTimeout(() => {
-    ServerQueue.delete(guildId)
-    getVoiceConnection(guildId)!.destroy()
-  }, 10000)
 }
 

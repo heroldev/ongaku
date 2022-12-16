@@ -14,7 +14,7 @@ export const Help: Command = {
       .addFields(
         { name: 'Functionality', value: 'a simple youtube music bot to make your day slightly better' },
         { name: 'General Commands', value: '`/help` - returns this message\n`/status` - returns musebert status\n`/pet` - give me the pets :3\n`/petcount` - shows how many times you have petted me!' },
-        { name: 'Playback Commands', value: '`/play <query>` - plays or queues a video from a youtube video URL\n`/queue` - displays the current video queue, or adds a video to the queue\n`/pause` - pauses the player\n`/unpause` - unpauses the player\n`/skip` - skips the currently playing video\n`/clear` - clears the queue, but does not stop the player\n`/stop` - stops the player and clears the queue' },
+        { name: 'Playback Commands', value: '`/play <query>` - plays or queues a video from a youtube video URL\n`/queue` - displays the current video queue, or adds a video to the queue\n`/pause` - pauses the player\n`/unpause` - unpauses the player\n`/skip` - skips the currently playing video\n`/clear` - clears the queue, but does not stop the player\n`/stop` - stops the player and clears the queue\n`/leave` - stops the player, clears the queue, and disconnects from the current voice channel' },
         )
       .setFooter({ text: 'musebert v1.0.0', iconURL: 'https://i.imgur.com/FB5GOR0.png' });
 
