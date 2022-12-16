@@ -55,11 +55,24 @@ export class YoutubeConnector {
       throw Error("Error getting the video from the URL");
     }
 
+    let video_length = parseInt(songInfo.videoDetails.lengthSeconds)
+    let minutes = Math.floor(video_length / 60)
+    let seconds = video_length % 60
+
+    let video_length_display = `\`${minutes}:${seconds}\``
+
+    if (video_length >= 3600) {
+      let hours = Math.floor(video_length / 3600)
+      let minutes = Math.floor(video_length / 60) - (hours * 60)
+      seconds = video_length % 60
+      video_length_display = `\`${hours}:${minutes}:${seconds}\``
+    }
+
     return {
       info: songInfo,
       url: songInfo.videoDetails.video_url,
       title: songInfo.videoDetails.title,
-      duration: parseInt(songInfo.videoDetails.lengthSeconds),
+      duration: video_length_display,
       member: member
     }
   }

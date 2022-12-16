@@ -8,10 +8,10 @@ import dbRun from "./dbRun"
  * @returns the total count of pets
  * @author heroldev (Andrew Herold)
  */
-export const dbIncrementPet = (user: string, type: PetType) => {
+export const dbIncrementJam = (user: string) => {
 
-  return dbRun("INSERT into pet_count (user_id, type) VALUES (?,?)", [user, type as number])
+  return dbRun("INSERT into jam_count (user_id) VALUES (?)", [user])
 
 }
 
-export default dbIncrementPet
+export default dbIncrementJam

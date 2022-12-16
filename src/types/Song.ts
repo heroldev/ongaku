@@ -8,6 +8,6 @@ import ytdl from "ytdl-core";
   info: ytdl.videoInfo;
   title: string;
   url: string;
-  duration: number;
+  duration: string;
   member: GuildMember;
 }

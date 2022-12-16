@@ -84,7 +84,7 @@ export const Play: Command = {
           .addFields(
             { name: 'video title', value: `${songInfo.title}` },
             { name: 'requested by', value: `${songInfo.member.user.tag}`, inline: true },
-            { name: 'length', value: `${songInfo.duration} seconds`, inline: true },
+            { name: 'length', value: `${songInfo.duration}`, inline: true },
             { name: 'video link', value: `[youtube](${songInfo.url})`, inline: true }
           )
           .setFooter({ text: `use \`/queue\` to view upcoming videos` })
@@ -102,12 +102,12 @@ export const Play: Command = {
 
     embed.setColor('#efc8c2')
       .setTitle(`Now Playing!`)
-      .setDescription(`musebert is connected to ${clientChannel}`)
+      .setDescription(`musebert is connected to ${member.voice.channel}`)
       .setImage(songInfo.info.videoDetails.thumbnails[0].url)
       .addFields(
         { name: 'video title', value: `${songInfo.title}` },
         { name: 'requested by', value: `${songInfo.member.user.tag}`, inline: true },
-        { name: 'length', value: `${songInfo.duration} seconds`, inline: true },
+        { name: 'length', value: `${songInfo.duration}`, inline: true },
         { name: 'video link', value: `[youtube](${songInfo.url})`, inline: true }
       )
       .setFooter({ text: `use \`/queue\` to view upcoming videos` })

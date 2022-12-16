@@ -15,7 +15,7 @@ export const updateListeningStatus = cron.job('0 */1 * * *', () => {
       activities: [status]
     })
   
-    console.log("meowbert status updated - "+ status.type + " " + status.name)
+    console.log("musebert status updated - "+ status.type + " " + status.name)
   }
 
 })

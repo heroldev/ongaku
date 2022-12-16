@@ -6,10 +6,10 @@ import dbGetMulti from "./dbGetMulti"
  * @returns the total count of pets
  * @author heroldev (Andrew Herold)
  */
-export const dbGetPet = (user: string) => {
+export const dbGetJam = (user: string) => {
 
-  return dbGetMulti("SELECT * from pet_count WHERE user_id=?", [user])
+  return dbGetMulti("SELECT * from jam_count WHERE user_id=?", [user])
 
 }
 
-export default dbGetPet
+export default dbGetJam

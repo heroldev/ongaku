@@ -80,13 +80,25 @@ export const SongQueue: Command = {
         .addFields(
           { name: 'video title', value: `${songInfo.title}` },
           { name: 'requested by', value: `${songInfo.member.user.tag}`, inline: true },
-          { name: 'length', value: `${songInfo.duration} seconds`, inline: true },
+          { name: 'length', value: `${songInfo.duration}`, inline: true },
           { name: 'video link', value: `[youtube](${songInfo.url})`, inline: true }
         )
 
     } else {
       // print the queue as an embed
       if (ServerQueue.has(guild.id)) {
+
+        if (ServerQueue.get(guild.id)!.size() <= 0) {
+          embed.setColor('#efc8c2')
+            .setTitle('no videos in the queue!')
+            .setDescription('use \`/play\` to get the party started!')
+          await interaction.followUp({
+            ephemeral: true,
+            embeds: [embed]
+          });
+          return
+        }
+
         let queueList: EmbedFieldData[] = []
 
         let upcomingSongs = ""
@@ -111,7 +123,7 @@ export const SongQueue: Command = {
         const clientChannel = guild.members.cache.get(client.user?.id as string)?.voice.channel
 
         embed.setColor('#efc8c2')
-          .setTitle('Current Queue:')
+          .setTitle('Current Queue!')
           .setDescription(`musebert is connected to ${clientChannel}`)
           .addFields(queueList)
 

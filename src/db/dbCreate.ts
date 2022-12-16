@@ -20,8 +20,8 @@ export const dbCreate = (dbFilePath: string) => {
 
   const runInitQueries = () => {
     // create the pet tables
-    database.run("CREATE TABLE IF NOT EXISTS `pet_count` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` varchar(50) NOT NULL,`type` INTEGER NOT NULL);", [])
-    console.log("pet tables created!")
+    database.run("CREATE TABLE IF NOT EXISTS `jam_count` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` varchar(50) NOT NULL);", [])
+    console.log("jam tables created!")
   }
 
   database.close()
