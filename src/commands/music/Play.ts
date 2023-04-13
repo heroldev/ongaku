@@ -1,5 +1,5 @@
 import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, entersState, getVoiceConnection, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from "@discordjs/voice";
-import { BaseCommandInteraction, Client, ClientUser, Guild, GuildMember, MessageEmbed, StageChannel, VoiceChannel } from "discord.js";
+import { BaseCommandInteraction, Client, ClientUser, Guild, GuildMember, InternalDiscordGatewayAdapterCreator, MessageEmbed, StageChannel, VoiceChannel } from "discord.js";
 import { Command } from "../../types/Command";
 
 import ytdl = require("ytdl-core");
@@ -141,7 +141,7 @@ export const songplayer = async (interaction: BaseCommandInteraction, member: Gu
     joinVoiceChannel({
       guildId: interaction.guildId as string,
       channelId: member.voice.channelId as string,
-      adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
+      adapterCreator: member.voice.channel!.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator
     })
   }
 
@@ -154,6 +154,23 @@ export const songplayer = async (interaction: BaseCommandInteraction, member: Gu
 
   const connection = getVoiceConnection(interaction.guildId as string)
   connection?.subscribe(ap)
+
+  // FIX DISCORD.JS Bug
+  // https://github.com/discordjs/discord.js/issues/9185#issuecomment-1452514375
+  // ----------------------------------------------------------------------------
+  const networkStateChangeHandler = (oldNetworkState: any, newNetworkState: any) => {
+    const newUdp = Reflect.get(newNetworkState, 'udp');
+    clearInterval(newUdp?.keepAliveInterval);
+  }
+  
+  connection?.on('stateChange', (oldState, newState) => {
+    const oldNetworking = Reflect.get(oldState, 'networking');
+    const newNetworking = Reflect.get(newState, 'networking');
+  
+    oldNetworking?.off('stateChange', networkStateChangeHandler);
+    newNetworking?.on('stateChange', networkStateChangeHandler);
+  });
+  // ----------------------------------------------------------------------------
 
   ap.on(AudioPlayerStatus.Idle, async () => {
     ServerQueue.get(interaction.guildId as string)?.dequeue()

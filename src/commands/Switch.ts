@@ -1,5 +1,5 @@
 import { Queue } from "@datastructures-js/queue";
-import { AudioPlayer, getVoiceConnection, joinVoiceChannel, VoiceConnectionReadyState } from "@discordjs/voice";
+import { AudioPlayer, DiscordGatewayAdapterCreator, getVoiceConnection, joinVoiceChannel, VoiceConnectionReadyState } from "@discordjs/voice";
 import { BaseCommandInteraction, Client, Guild, GuildMember, MessageEmbed } from "discord.js";
 import { Command } from "../types/Command";
 import { Song } from "../types/Song";
@@ -48,8 +48,8 @@ export const Switch: Command = {
 
       if (member.voice.channelId === clientChannel?.id) {
         embed.setColor('#efc8c2')
-        .setTitle('switch failed!')
-        .setDescription(`musebert is already in the same channel as you!`)
+          .setTitle('switch failed!')
+          .setDescription(`musebert is already in the same channel as you!`)
         await interaction.followUp({
           ephemeral: true,
           embeds: [embed]
@@ -64,9 +64,28 @@ export const Switch: Command = {
       joinVoiceChannel({
         guildId: interaction.guildId as string,
         channelId: member.voice.channelId as string,
-        adapterCreator: member.voice.channel!.guild.voiceAdapterCreator
+        adapterCreator: member.voice.channel!.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator
       })
       connection.subscribe(ap)
+
+      // FIX DISCORD.JS Bug
+      // https://github.com/discordjs/discord.js/issues/9185#issuecomment-1452514375
+      // ----------------------------------------------------------------------------
+      const networkStateChangeHandler = (oldNetworkState: any, newNetworkState: any) => {
+        const newUdp = Reflect.get(newNetworkState, 'udp');
+        clearInterval(newUdp?.keepAliveInterval);
+      }
+
+      connection.on('stateChange', (oldState, newState) => {
+        const oldNetworking = Reflect.get(oldState, 'networking');
+        const newNetworking = Reflect.get(newState, 'networking');
+
+        oldNetworking?.off('stateChange', networkStateChangeHandler);
+        newNetworking?.on('stateChange', networkStateChangeHandler);
+      });
+      // ----------------------------------------------------------------------------
+
+
 
       embed.setColor('#efc8c2')
         .setTitle('channel switch!')
